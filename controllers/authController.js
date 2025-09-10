@@ -41,7 +41,7 @@ exports.voterLogin = async (req, res) => {
 
 // Registration (Admin/Chairman or Voter)
 exports.register = async (req, res) => {
-  const { name, email, password, voterId, role } = req.body;
+  const { name, email, password, role } = req.body;
 
   try {
     if (role === "admin" || role === "chairman") {
@@ -84,13 +84,13 @@ exports.register = async (req, res) => {
 
     } else if (role === "voter") {
       // Voter registration
-      if (!name || !email || !voterId) {
+      if (!name || !email) {
         return res
           .status(400)
           .json({ message: "Name, email, and voterId are required for voter" });
       }
 
-      const existingVoter = await User.findOne({ $or: [{ email }, { voterId }] });
+      const existingVoter = await User.findOne({ $or: [{ email }] });
       if (existingVoter) {
         return res
           .status(400)
@@ -100,7 +100,6 @@ exports.register = async (req, res) => {
       const voter = await User.create({
         name,
         email,
-        voterId,
         role: "voter",
       });
 
@@ -124,7 +123,7 @@ exports.register = async (req, res) => {
           Email: ${email}<br>
         </div>
         <p style="margin-top: 20px; font-size: 16px;">Please login as Admin to generate their access code.</p>
-        <button style="margin-top: 20px; padding: 10px 20px; background-color: #38b2ac; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;" onclick="window.location.href='https://e-voting-system-xi.vercel.app/login'">Go to Admin Login</button>
+        <button style="margin-top: 20px; padding: 10px 20px; background-color: #17726dff; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;" onclick="window.location.href='https://e-voting-system-xi.vercel.app/admin/login'">Go to Admin Login</button>
       </div>
         <p style="margin-top: 30px; font-size: 14px; color: #e2e8f0;">If you did not expect this registration, contact the system administrator.</p>
       </div>
@@ -147,7 +146,6 @@ exports.register = async (req, res) => {
           id: voter._id,
           name: voter.name,
           email: voter.email,
-          voterId: voter.voterId,
           role: voter.role,
         },
       });
