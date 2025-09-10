@@ -1,25 +1,33 @@
 const jwt = require("jsonwebtoken");
 
 const sendToken = (user, statusCode, res) => {
-  const token = jwt.sign(
-    { id: user._id, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: "8h" }
-  );
+  // Create JWT payload
+  const payload = { id: user._id, role: user.role };
+  const token = jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || "8h",
+  });
 
-  const options = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // only on HTTPS in prod
-    sameSite: "strict",
-    maxAge: 8 * 60 * 60 * 1000 // 8 hours
+  // Determine if we are in production
+  const isProd = process.env.NODE_ENV === "production";
+
+  const cookieOptions = {
+    httpOnly: true,                 // inaccessible to JS
+    secure: isProd,                 // only send over HTTPS in prod
+    sameSite: isProd ? "none" : "lax", // cross-site in prod
+    maxAge: 8 * 60 * 60 * 1000,     // 8 hours
   };
 
   res
     .status(statusCode)
-    .cookie("token", token, options)
+    .cookie("token", token, cookieOptions)
     .json({
       success: true,
-      user: { id: user._id, name: user.name, role: user.role }
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email || null,
+        role: user.role,
+      },
     });
 };
 
