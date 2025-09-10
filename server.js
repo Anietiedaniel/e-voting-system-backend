@@ -17,14 +17,20 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
-// CORS configuration
+// Determine if production
 const isProd = process.env.NODE_ENV === "production";
-app.use(
-  cors({
-    origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
-    credentials: true, // allow cookies to be sent cross-domain
-  })
-);
+
+// CORS configuration
+const corsOptions = {
+  origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+  credentials: true,              // allow cookies to be sent cross-domain
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+app.use(cors(corsOptions));
+
+// Preflight requests
+app.options("*", cors(corsOptions));
 
 // Import routes
 const authRoutes = require("./routes/authRoute");
@@ -48,5 +54,8 @@ app.get("/", (req, res) => {
 // Error handler (last middleware)
 app.use(errorHandler);
 
+// Start server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () =>
+  console.log(`🚀 Server running in ${isProd ? "production" : "development"} on port ${PORT}`)
+);
