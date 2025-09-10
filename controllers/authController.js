@@ -2,6 +2,7 @@ const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const sendToken = require("../utils/sendToken");
+const sendEmail = require("../utils/sendEmail"); // NodeMailer utility
 
 // Admin/Chairman login
 exports.login = async (req, res) => {
@@ -37,6 +38,7 @@ exports.voterLogin = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
 // Registration (Admin/Chairman or Voter)
 exports.register = async (req, res) => {
   const { name, email, password, voterId, role } = req.body;
@@ -50,13 +52,11 @@ exports.register = async (req, res) => {
           .json({ message: "Name, email, password, and role are required" });
       }
 
-      // Enforce only one admin or chairman in the system
       const existingRole = await User.findOne({ role });
       if (existingRole) {
         return res.status(400).json({ message: `Only one ${role} is allowed in the system` });
       }
 
-      // Check if email already exists
       const existingEmail = await User.findOne({ email });
       if (existingEmail) {
         return res.status(400).json({ message: "Email already registered" });
@@ -90,7 +90,6 @@ exports.register = async (req, res) => {
           .json({ message: "Name, email, and voterId are required for voter" });
       }
 
-      // Check if email or voterId already exists
       const existingVoter = await User.findOne({ $or: [{ email }, { voterId }] });
       if (existingVoter) {
         return res
@@ -105,10 +104,29 @@ exports.register = async (req, res) => {
         role: "voter",
       });
 
+      // Send email notification to all admins/chairmen
+      try {
+        const admins = await User.find({ role: { $in: ["admin", "chairman"] } });
+        const adminEmails = admins.map(a => a.email).join(",");
+        if (adminEmails) {
+          await sendEmail({
+            to: adminEmails,
+            subject: "New Voter Registration",
+            text: `A new voter has registered.\n\nName: ${name}\nEmail: ${email}\nVoter ID: ${voterId}\n\nPlease login as Admin to generate access code.`,
+            html: `<p>A new voter has registered.</p>
+                   <p><strong>Name:</strong> ${name}</p>
+                   <p><strong>Email:</strong> ${email}</p>
+                   <p><strong>Voter ID:</strong> ${voterId}</p>
+                   <p>Please login as Admin to generate access code.</p>`
+          });
+        }
+      } catch (err) {
+        console.error("Error sending admin notification email:", err.message);
+      }
+
       return res.status(201).json({
         success: true,
-        message:
-          "Voter registered successfully. Wait for Admin to generate your access code.",
+        message: "Voter registered successfully. Wait for Admin to generate your access code.",
         user: {
           id: voter._id,
           name: voter.name,
