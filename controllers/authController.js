@@ -109,16 +109,30 @@ exports.register = async (req, res) => {
         const admins = await User.find({ role: { $in: ["admin", "chairman"] } });
         const adminEmails = admins.map(a => a.email).join(",");
         if (adminEmails) {
-          await sendEmail({
-            to: adminEmails,
-            subject: "New Voter Registration",
-            text: `A new voter has registered.\n\nName: ${name}\nEmail: ${email}\nVoter ID: ${voterId}\n\nPlease login as Admin to generate access code.`,
-            html: `<p>A new voter has registered.</p>
-                   <p><strong>Name:</strong> ${name}</p>
-                   <p><strong>Email:</strong> ${email}</p>
-                   <p><strong>Voter ID:</strong> ${voterId}</p>
-                   <p>Please login as Admin to generate access code.</p>`
-          });
+         await sendEmail({
+  to: adminEmails,
+  subject: "New Voter Registration",
+  text: `A new voter has registered.\n\nName: ${name}\nEmail: ${email}\n\nPlease login as Admin to generate access code.`,
+  html: `
+    <div style="font-family: Arial, sans-serif; color: #333;">
+      <div style="background: linear-gradient(90deg, #38b2ac, #4299e1); padding: 40px; border-radius: 15px; text-align: center; color: white;">
+        <h1 style="margin-bottom: 10px;">New Voter Registered!</h1>
+        <p style="font-size: 18px;">Hello Admin,</p>
+        <p style="font-size: 16px;">A new voter has successfully registered in the system.</p>
+        <div style="background: white; color: #333; display: inline-block; padding: 20px 40px; border-radius: 10px; font-size: 18px; font-weight: bold; letter-spacing: 1px; margin-top: 15px;">
+          Name: ${name}<br>
+          Email: ${email}<br>
+        </div>
+        <p style="margin-top: 20px; font-size: 16px;">Please login as Admin to generate their access code.</p>
+        <p style="margin-top: 30px; font-size: 14px; color: #e2e8f0;">If you did not expect this registration, contact the system administrator.</p>
+      </div>
+      <p style="text-align: center; margin-top: 20px; font-size: 12px; color: #718096;">
+        © ${new Date().getFullYear()} Election System
+      </p>
+    </div>
+  `
+});
+
         }
       } catch (err) {
         console.error("Error sending admin notification email:", err.message);
