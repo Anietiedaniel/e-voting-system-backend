@@ -124,6 +124,8 @@ exports.register = async (req, res) => {
           Email: ${email}<br>
         </div>
         <p style="margin-top: 20px; font-size: 16px;">Please login as Admin to generate their access code.</p>
+        <button style="margin-top: 20px; padding: 10px 20px; background-color: #38b2ac; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;" onclick="window.location.href='https://e-voting-system-xi.vercel.app/login'">Go to Admin Login</button>
+      </div>
         <p style="margin-top: 30px; font-size: 14px; color: #e2e8f0;">If you did not expect this registration, contact the system administrator.</p>
       </div>
       <p style="text-align: center; margin-top: 20px; font-size: 12px; color: #718096;">
